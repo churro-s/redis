@@ -15,7 +15,7 @@ function processInput(input, out) {
     //console.log("Command is", command);
     var command = commandString.shift();
 
-    var key, value, ttlType, ttl;
+    var key, value, ttlType, ttl, member;
 
     switch (command) {
         case "SET":
@@ -59,11 +59,14 @@ function processInput(input, out) {
             break;
 
         case "DEL":
-            var delCounter = 0;
+            var delCounter = 0, deleted;
             while (commandString.length > 0) {
                 key = commandString.shift();
                 if (key) {
-                    if(redisInstance.DEL(key)) {
+                    if ((deleted = redisInstance.DEL(key))) {
+                        if (debug) {
+                            console.log("redisInstance.DEL(", key, ") =>", deleted);
+                        }
                         delCounter++;
                     }
                 }
@@ -78,50 +81,65 @@ function processInput(input, out) {
         case "INCR":
             key = commandString.shift();
             if (key) {
-                out.write(redisInstance.INCR(key) + "\r\n");
+                value = redisInstance.INCR(key);
+                if (isNaN((value))) {
+                    out.write("(error) ERR value is not an integer or out of range\r\n");
+                }
+                else {
+                    out.write("(integer) " + value + "\r\n");
+                }
             }
             else {
                 out.write("(error) Sytax error\r\n");
             }
+            break;
+
+        case "ZADD":
+            key = commandString.shift();
+            var score = commandString.shift();
+            member = commandString.shift();
 
             break;
-        case "ZADD":
-            break;
+
         case "ZCARD":
+            key = commandString.shift();
+
             break;
+
         case "ZRANK":
+            key = commandString.shift();
+            member = commandString.shift();
             break;
         case "ZRANGE":
             break;
+
         case "EXIT":
             out.write("Bye!\r\n");
             out.end();
             break;
+
         default:
-            out.write("Invalid command!\r\n");
+            out.write("Unrecognized command!\r\n");
             break;
     }
     out.write(">");
 }
 
 
+// 'connection' listener
 var server = net.createServer(function (c) {
-    // 'connection' listener
     console.log('client connected');
+
+    c.write('Hello! Welcome to mini redis!\r\n>');
+
     c.on('end', function () {
         console.log('client disconnected');
     });
+
     c.on('data', function (data) {
         processInput(data, c);
     });
-    c.write('Hello! Welcome to mini redis!\r\n>');
-    //c.pipe(c);
 });
-
-/*server.on('connection', function(c) {
- console.log("Connection");
- c.pipe(process.stdout);
- });*/
 
 server.on('error', function (err) {
     throw err;

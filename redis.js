@@ -11,10 +11,10 @@ Redis.prototype.DEL = function DEL(key) {
     var oldValue = this.map[key];
     if (oldValue) {
         clearTimeout(oldValue.timeout);
+        this.size--;
     }
     delete this.map[key];
-    this.size--;
-    return oldValue;
+    return oldValue && oldValue.value;
 };
 
 
@@ -53,7 +53,12 @@ Redis.prototype.SIZE = function SIZE() {
 };
 
 Redis.prototype.INCR = function INCR(key) {
-    return ++this.map[key];
+    var val = this.GET(key);
+    val = (val - 0) + 1;
+    if (isNaN(val)) {
+        return val;
+    }
+    return this.SET(key, val);
 };
 
 
