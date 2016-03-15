@@ -138,13 +138,14 @@ function processInput(input, out) {
             var stop = commandString.shift();
             if (key && start && stop) {
                 value = redisInstance.ZRANGE(key, start, stop);
-                if (value === null || value.length) {
-                    out.write("(empty list or set)\r\n");
+                console.log("Value is", value);
+                if (value && value.length) {
+                    for (i=0; i< value.length; i++) {
+                        out.write(i + ") " + value[i].member + "\r\n");
+                    }
                 }
                 else {
-                    for (i=0; i< value.length; i++) {
-                        out.write(i + ") " + value + "\r\n");
-                    }
+                    out.write("(empty list or set)\r\n");
                 }
             }
             else {

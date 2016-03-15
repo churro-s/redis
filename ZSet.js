@@ -7,10 +7,10 @@ function ZElement(score, member) {
 }
 // Comparator function to use for ordering ZElements
 ZElement.prototype.compareTo = function compareTo(other) {
-    if (this.score == other.score) {
+    if (this.score === other.score) {
         return this.member.localeCompare(other.member); //string comparison
     }
-    return this.score > other.score;
+    return this.score > other.score ? 1 : -1;
 };
 
 
@@ -19,7 +19,7 @@ function ZSet() {
     this.memberMap = {};//map of {member : element}
     this.sortedElements = []; //sorted version of elements
     this.size = 0; //size of ZSet
-    this.sorted = true; //short circuit for sorting operation
+    this.sorted = false; //short circuit for sorting operation
 }
 
 ZSet.prototype.add = function add(score, member) {
@@ -42,7 +42,9 @@ ZSet.prototype.sort = function sort() {
     if (this.sorted) {
         return;
     }
+    console.log("about to sort");
     this.sortedElements.sort(function comparator(a, b) {
+        console.log("compared", a, b, a.compareTo(b));
         return a.compareTo(b);
     });
     this.sorted = true;
@@ -64,7 +66,7 @@ ZSet.prototype.getRank = function getRank(member) {
 
 ZSet.prototype.zrange = function zrange(start, stop) {
     this.sort();
-    return this.sortedElements.slice(start, stop);
+    return this.sortedElements.slice(start, this.sortedElements.length - stop);
 };
 
 exports.ZElement = ZElement;
