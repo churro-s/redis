@@ -1,3 +1,7 @@
+var zs = require('./ZSet');
+var ZSet = zs.ZSet;
+var ZElement = zs.ZElement;
+
 /**
  * Constructs a new redis client
  * @constructor
@@ -59,6 +63,51 @@ Redis.prototype.INCR = function INCR(key) {
         return val;
     }
     return this.SET(key, val);
+};
+
+Redis.prototype.ZADD = function ZADD(key, score, member) {
+    var val = this.GET(key);
+    if (val) {
+        if (val instanceof ZSet) {
+            return val.add(score, member);
+        }
+        else {
+            return null; //found a non-ZSet value
+        }
+    }
+    else {
+        val = new ZSet();
+        this.SET(key, val);
+        return val.add(score, member);
+    }
+};
+Redis.prototype.ZCARD = function ZCARD(key) {
+    var val = this.GET(key);
+    if (val && val instanceof ZSet) {
+        return val.zcard();
+    }
+    else {
+        return 0; //found a non-ZSet value
+    }
+};
+
+Redis.prototype.ZRANK = function ZRANK(key, member) {
+    var val = this.GET(key);
+    if (val && val instanceof ZSet) {
+        return val.getRank(member);
+    }
+    else {
+        return null; //found a non-ZSet value
+    }
+};
+Redis.prototype.ZRANGE = function ZRANGE(key, start, stop) {
+    var val = this.GET(key);
+    if (val && val instanceof ZSet) {
+        return val.zrange(start, stop);
+    }
+    else {
+        return null; //found a non-ZSet value
+    }
 };
 
 

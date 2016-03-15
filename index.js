@@ -15,7 +15,7 @@ function processInput(input, out) {
     //console.log("Command is", command);
     var command = commandString.shift();
 
-    var key, value, ttlType, ttl, member;
+    var key, value, ttlType, ttl, score, member;
 
     switch (command) {
         case "SET":
@@ -45,12 +45,12 @@ function processInput(input, out) {
         case "GET":
             key = commandString.shift();
             if (key) {
-                var val = redisInstance.GET(key);
+                value = redisInstance.GET(key);
                 if (debug) {
-                    console.log("redisInstance.GET(", key, ") =>", val);
+                    console.log("redisInstance.GET(", key, ") =>", value);
                 }
-                if (val) {
-                    out.write(val + "\r\n");
+                if (value) {
+                    out.write(value + "\r\n");
                 }
                 else {
                     out.write("(nil)\r\n");
@@ -96,21 +96,60 @@ function processInput(input, out) {
 
         case "ZADD":
             key = commandString.shift();
-            var score = commandString.shift();
+            score = commandString.shift();
             member = commandString.shift();
-
+            if (key && score && member) {
+                value = redisInstance.ZADD(key, score,member);
+                if (value === null) {
+                    out.write("(error) WRONGTYPE Operation against a key holding the wrong kind of value\r\n");
+                }
+                else {
+                    out.write("(integer) " + value + "\r\n");
+                }
+            }
             break;
 
         case "ZCARD":
             key = commandString.shift();
-
+            if (key) {
+                value = redisInstance.ZCARD(key);
+                out.write("(integer) " + value + "\r\n");
+            }
+            else {
+                out.write("(error) ERR wrong number of arguments for 'zcard' command\r\n");
+            }
             break;
 
         case "ZRANK":
             key = commandString.shift();
             member = commandString.shift();
+            value = redisInstance.ZRANK(key, member);
+            if (value === null) {
+                out.write("(nil)\r\n");
+            }
+            else {
+                out.write("(integer) " + value + "\r\n");
+            }
             break;
+
         case "ZRANGE":
+            key = commandString.shift();
+            var start = commandString.shift();
+            var stop = commandString.shift();
+            if (key && start && stop) {
+                value = redisInstance.ZRANGE(key, start, stop);
+                if (value === null || value.length) {
+                    out.write("(empty list or set)\r\n");
+                }
+                else {
+                    for (i=0; i< value.length; i++) {
+                        out.write(i + ") " + value + "\r\n");
+                    }
+                }
+            }
+            else {
+                out.write("(error) ERR wrong number of arguments for 'zrange' command\r\n");
+            }
             break;
 
         case "EXIT":
@@ -122,7 +161,9 @@ function processInput(input, out) {
             out.write("Unrecognized command!\r\n");
             break;
     }
-    out.write(">");
+    if (command !== "EXIT") {
+        out.write(">");
+    }
 }
 
 
