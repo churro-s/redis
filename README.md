@@ -6,8 +6,14 @@ The coding prompt is in [ServerEngineeringRedisChallenge.pdf](ServerEngineeringR
 
 To run:
 ```js
-npm install
-node index.js
+$ npm install
+$ node index.js
 ```
 
 This will create a TELNET server on port 5555, which you can connect to as you would with the Redis CLI.
+
+Connect to it:
+
+```
+$ telnet localhost 5555
+```
